@@ -128,52 +128,52 @@ protected:
 	**/
 
 	UFUNCTION()
-	virtual void OnRep_Health();
+	virtual void OnRep_Health(const FGameplayAttributeData& OldData);
 
 	UFUNCTION()
-	virtual void OnRep_MaxHealth();
+	virtual void OnRep_MaxHealth(const FGameplayAttributeData& OldData);
 
 	UFUNCTION()
-	virtual void OnRep_HealthRegenRate();
+	virtual void OnRep_HealthRegenRate(const FGameplayAttributeData& OldData);
 
 	UFUNCTION()
-	virtual void OnRep_Mana();
+	virtual void OnRep_Mana(const FGameplayAttributeData& OldData);
 
 	UFUNCTION()
-	virtual void OnRep_MaxMana();
+	virtual void OnRep_MaxMana(const FGameplayAttributeData& OldData);
 
 	UFUNCTION()
-	virtual void OnRep_ManaRegenRate();
+	virtual void OnRep_ManaRegenRate(const FGameplayAttributeData& OldData);
 
 	UFUNCTION()
-	virtual void OnRep_Stamina();
+	virtual void OnRep_Stamina(const FGameplayAttributeData& OldData);
 
 	UFUNCTION()
-	virtual void OnRep_MaxStamina();
+	virtual void OnRep_MaxStamina(const FGameplayAttributeData& OldData);
 
 	UFUNCTION()
-	virtual void OnRep_StaminaRegenRate();
+	virtual void OnRep_StaminaRegenRate(const FGameplayAttributeData& OldData);
 
 	UFUNCTION()
-	virtual void OnRep_Armor();
+	virtual void OnRep_Armor(const FGameplayAttributeData& OldData);
 
 	UFUNCTION()
-	virtual void OnRep_MoveSpeed();
+	virtual void OnRep_MoveSpeed(const FGameplayAttributeData& OldData);
 
 	UFUNCTION()
-	virtual void OnRep_CharacterLevel();
+	virtual void OnRep_CharacterLevel(const FGameplayAttributeData& OldData);
 
 	UFUNCTION()
-	virtual void OnRep_XP();
+	virtual void OnRep_XP(const FGameplayAttributeData& OldData);
 
 	UFUNCTION()
-	virtual void OnRep_XPBounty();
+	virtual void OnRep_XPBounty(const FGameplayAttributeData& OldData);
 
 	UFUNCTION()
-	virtual void OnRep_Gold();
+	virtual void OnRep_Gold(const FGameplayAttributeData& OldData);
 
 	UFUNCTION()
-	virtual void OnRep_GoldBounty();
+	virtual void OnRep_GoldBounty(const FGameplayAttributeData& OldData);
 
 private:
 	FGameplayTag HitDirectionFrontTag;
