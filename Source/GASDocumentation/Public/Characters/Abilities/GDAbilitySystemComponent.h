@@ -24,4 +24,8 @@ public:
 
 	// Called from GDDamageExecCalculation. Broadcasts on ReceivedDamage whenever this ASC receives damage.
 	virtual void ReceiveDamage(UGDAbilitySystemComponent* SourceASC, float UnmitigatedDamage, float MitigatedDamage);
+
+    // for debug
+    virtual void AbilityLocalInputPressed(int32 InputID) override;
+
 };

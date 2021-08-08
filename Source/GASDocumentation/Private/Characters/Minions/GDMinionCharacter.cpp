@@ -40,7 +40,7 @@ AGDMinionCharacter::AGDMinionCharacter(const class FObjectInitializer& ObjectIni
 	UIFloatingStatusBarClass = StaticLoadClass(UObject::StaticClass(), nullptr, TEXT("/Game/GASDocumentation/UI/UI_FloatingStatusBar_Minion.UI_FloatingStatusBar_Minion_C"));
 	if (!UIFloatingStatusBarClass)
 	{
-		UE_LOG(LogTemp, Error, TEXT("%s() Failed to find UIFloatingStatusBarClass. If it was moved, please update the reference location in C++."), TEXT(__FUNCTION__));
+		//UE_LOG(LogTemp, Error, TEXT("%s() Failed to find UIFloatingStatusBarClass. If it was moved, please update the reference location in C++."), TEXT(__FUNCTION__));
 	}
 }
 
@@ -75,14 +75,15 @@ void AGDMinionCharacter::BeginPlay()
 		}
 
 		// Attribute change callbacks
-		HealthChangedDelegateHandle = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSetBase->GetHealthAttribute()).AddUObject(this, &AGDMinionCharacter::HealthChanged);
+		HealthChangedDelegateHandle = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSetBase->GetHealthAttribute()).AddUObject(this, &AGDMinionCharacter::OnHealthChanged);
 
 		// Tag change callbacks
 		AbilitySystemComponent->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag(FName("State.Debuff.Stun")), EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AGDMinionCharacter::StunTagChanged);
 	}
 }
 
-void AGDMinionCharacter::HealthChanged(const FOnAttributeChangeData & Data)
+// 伤害事件. 如果死亡，标记上DeadTag
+void AGDMinionCharacter::OnHealthChanged(const FOnAttributeChangeData & Data)
 {
 	float Health = Data.NewValue;
 
@@ -99,6 +100,7 @@ void AGDMinionCharacter::HealthChanged(const FOnAttributeChangeData & Data)
 	}
 }
 
+// 击昏时打断技能
 void AGDMinionCharacter::StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
 {
 	if (NewCount > 0)
@@ -109,6 +111,7 @@ void AGDMinionCharacter::StunTagChanged(const FGameplayTag CallbackTag, int32 Ne
 		FGameplayTagContainer AbilityTagsToIgnore;
 		AbilityTagsToIgnore.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.NotCanceledByStun")));
 
+        //标记了NotCanceledByStun的技能不能被打断
 		AbilitySystemComponent->CancelAbilities(&AbilityTagsToCancel, &AbilityTagsToIgnore);
 	}
 }

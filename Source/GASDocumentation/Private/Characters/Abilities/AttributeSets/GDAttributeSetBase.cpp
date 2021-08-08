@@ -163,7 +163,7 @@ void UGDAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectModCall
 				}
 
 				// Show damage number for the Source player unless it was self damage
-				if (SourceActor != TargetActor)
+				//if (SourceActor != TargetActor)
 				{
 					AGDPlayerController* PC = Cast<AGDPlayerController>(SourceController);
 					if (PC)

@@ -48,7 +48,7 @@ AGDHeroCharacter::AGDHeroCharacter(const class FObjectInitializer& ObjectInitial
 	UIFloatingStatusBarClass = StaticLoadClass(UObject::StaticClass(), nullptr, TEXT("/Game/GASDocumentation/UI/UI_FloatingStatusBar_Hero.UI_FloatingStatusBar_Hero_C"));
 	if (!UIFloatingStatusBarClass)
 	{
-		UE_LOG(LogTemp, Error, TEXT("%s() Failed to find UIFloatingStatusBarClass. If it was moved, please update the reference location in C++."), TEXT(__FUNCTION__));
+		//UE_LOG(LogTemp, Error, TEXT("%s() Failed to find UIFloatingStatusBarClass. If it was moved, please update the reference location in C++."), TEXT(__FUNCTION__));
 	}
 
 	AIControllerClass = AGDHeroAIController::StaticClass();
@@ -80,6 +80,8 @@ void AGDHeroCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 void AGDHeroCharacter::PossessedBy(AController * NewController)
 {
 	Super::PossessedBy(NewController);
+    FString Name = GetNameSafe(this);
+    //UE_LOG(LogTemp, Log, TEXT("%s |%s"), *GetNameSafe(this), TEXT(__FUNCTION__));
 
 	AGDPlayerState* PS = GetPlayerState<AGDPlayerState>();
 	if (PS)

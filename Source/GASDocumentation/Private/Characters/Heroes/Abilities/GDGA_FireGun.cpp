@@ -8,6 +8,8 @@
 #include "GDHeroCharacter.h"
 #include "Kismet/KismetMathLibrary.h"
 
+#include "Abilities/Tasks/AbilityTask_WaitInputRelease.h"
+
 UGDGA_FireGun::UGDGA_FireGun()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
@@ -20,15 +22,38 @@ UGDGA_FireGun::UGDGA_FireGun()
 
 	Range = 1000.0f;
 	Damage = 12.0f;
+
+    bInputContinuePressed = false;
+    AnimationRate = 1.f;
 }
 
 void UGDGA_FireGun::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo * ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData * TriggerEventData)
 {
+    // 修改为连发的Machine Gun
+
+#if 0
+    Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+#else
+
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 	}
 
+    PlayFireAnimation();
+
+#endif
+
+    bInputContinuePressed = true;
+
+    UAbilityTask_WaitInputRelease* WaitInputRelease = UAbilityTask_WaitInputRelease::WaitInputRelease(this);
+    WaitInputRelease->OnRelease.AddDynamic(this, &UGDGA_FireGun::OnInputRelease);
+    WaitInputRelease->Activate();
+}
+
+
+void UGDGA_FireGun::PlayFireAnimation()
+{
 	UAnimMontage* MontageToPlay = FireHipMontage;
 
 	if (GetAbilitySystemComponentFromActorInfo()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(FName("State.AimDownSights"))) &&
@@ -38,33 +63,53 @@ void UGDGA_FireGun::ActivateAbility(const FGameplayAbilitySpecHandle Handle, con
 	}
 
 	// Play fire montage and wait for event telling us to spawn the projectile
-	UGDAT_PlayMontageAndWaitForEvent* Task = UGDAT_PlayMontageAndWaitForEvent::PlayMontageAndWaitForEvent(this, NAME_None, MontageToPlay, FGameplayTagContainer(), 1.0f, NAME_None, false, 1.0f);
-	Task->OnBlendOut.AddDynamic(this, &UGDGA_FireGun::OnCompleted);
-	Task->OnCompleted.AddDynamic(this, &UGDGA_FireGun::OnCompleted);
-	Task->OnInterrupted.AddDynamic(this, &UGDGA_FireGun::OnCancelled);
-	Task->OnCancelled.AddDynamic(this, &UGDGA_FireGun::OnCancelled);
-	Task->EventReceived.AddDynamic(this, &UGDGA_FireGun::EventReceived);
+    {
+        UGDAT_PlayMontageAndWaitForEvent* AnimTask = UGDAT_PlayMontageAndWaitForEvent::PlayMontageAndWaitForEvent(this, NAME_None, MontageToPlay, FGameplayTagContainer(), AnimationRate, NAME_None, false, 1.0f);
+        AnimTask->OnBlendOut.AddDynamic(this, &UGDGA_FireGun::OnCompleted);
+        AnimTask->OnCompleted.AddDynamic(this, &UGDGA_FireGun::OnCompleted);
+        AnimTask->OnInterrupted.AddDynamic(this, &UGDGA_FireGun::OnCancelled);
+        AnimTask->OnCancelled.AddDynamic(this, &UGDGA_FireGun::OnCancelled);
+        AnimTask->EventReceived.AddDynamic(this, &UGDGA_FireGun::EventReceived);
+
 	// ReadyForActivation() is how you activate the AbilityTask in C++. Blueprint has magic from K2Node_LatentGameplayTaskCall that will automatically call ReadyForActivation().
-	Task->ReadyForActivation();
+        AnimTask->ReadyForActivation();
+    }
+
 }
 
 void UGDGA_FireGun::OnCancelled(FGameplayTag EventTag, FGameplayEventData EventData)
 {
+    bInputContinuePressed = false;
+    CurrentActorInfo->AbilitySystemComponent->CurrentMontageStop();
+
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }
 
+// 动画结束后继续播放
 void UGDGA_FireGun::OnCompleted(FGameplayTag EventTag, FGameplayEventData EventData)
 {
+    if (bInputContinuePressed)
+    {
+        //PlayFireAnimation();
+    }
+    else
+    {
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+}
 }
 
 void UGDGA_FireGun::EventReceived(FGameplayTag EventTag, FGameplayEventData EventData)
 {
+    UE_LOG(LogTemp, Log, TEXT(">>UGDGA_FireGun::EventReceived Tag:%s"), *EventTag.ToString());
+
 	// Montage told us to end the ability before the montage finished playing.
 	// Montage was set to continue playing animation even after ability ends so this is okay.
 	if (EventTag == FGameplayTag::RequestGameplayTag(FName("Event.Montage.EndAbility")))
 	{
+        if (!bInputContinuePressed)
+        {
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+        }
 		return;
 	}
 
@@ -100,4 +145,11 @@ void UGDGA_FireGun::EventReceived(FGameplayTag EventTag, FGameplayEventData Even
 		Projectile->Range = Range;
 		Projectile->FinishSpawning(MuzzleTransform);
 	}
+}
+
+void UGDGA_FireGun::OnInputRelease(float TimeHeld)
+{
+    CurrentActorInfo->AbilitySystemComponent->CurrentMontageStop();
+    bInputContinuePressed = false;
+    EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }

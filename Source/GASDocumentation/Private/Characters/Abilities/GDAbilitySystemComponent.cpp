@@ -7,3 +7,9 @@ void UGDAbilitySystemComponent::ReceiveDamage(UGDAbilitySystemComponent * Source
 {
 	ReceivedDamage.Broadcast(SourceASC, UnmitigatedDamage, MitigatedDamage);
 }
+
+void UGDAbilitySystemComponent::AbilityLocalInputPressed(int32 InputID)
+{
+    UE_LOG(LogTemp, Log, TEXT("AbilityLocalInputPressed:%d"), InputID);
+    Super::AbilityLocalInputPressed(InputID);
+}

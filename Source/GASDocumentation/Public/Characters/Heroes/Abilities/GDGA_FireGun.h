@@ -34,6 +34,8 @@ public:
 	/** Actually activate ability, do not call this directly. We'll call it from APAHeroCharacter::ActivateAbilitiesWithTags(). */
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 
+    UPROPERTY(BlueprintReadOnly, EditAnywhere)
+    float AnimationRate;
 protected:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 	float Range;
@@ -49,4 +51,13 @@ protected:
 
 	UFUNCTION()
 	void EventReceived(FGameplayTag EventTag, FGameplayEventData EventData);
+
+private:
+
+    
+    bool bInputContinuePressed;
+    UFUNCTION()
+    void OnInputRelease(float TimeHeld);
+
+    void PlayFireAnimation();
 };
