@@ -1,10 +1,10 @@
-// Copyright 2019 Dan Kestranek.
+// Copyright 2020 Dan Kestranek.
 
-#include "GASDocumentationGameMode.h"
+#include "GASDocumentation/GASDocumentationGameMode.h"
 #include "Engine/World.h"
-#include "GDHeroCharacter.h"
-#include "GDPlayerController.h"
-#include "GDPlayerState.h"
+#include "Characters/Heroes/GDHeroCharacter.h"
+#include "Player/GDPlayerController.h"
+#include "Player/GDPlayerState.h"
 #include "GameFramework/SpectatorPawn.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
@@ -17,7 +17,7 @@ AGASDocumentationGameMode::AGASDocumentationGameMode()
 	HeroClass = StaticLoadClass(UObject::StaticClass(), nullptr, TEXT("/Game/GASDocumentation/Characters/Hero/BP_HeroCharacter.BP_HeroCharacter_C"));
 	if (!HeroClass)
 	{
-		//UE_LOG(LogTemp, Error, TEXT("%s() Failed to find HeroClass. If it was moved, please update the reference location in C++."), TEXT(__FUNCTION__));
+		UE_LOG(LogTemp, Error, TEXT("%s() Failed to find HeroClass. If it was moved, please update the reference location in C++."), *FString(__FUNCTION__));
 	}
 }
 

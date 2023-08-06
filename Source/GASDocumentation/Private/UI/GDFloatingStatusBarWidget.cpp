@@ -1,5 +1,5 @@
-// Copyright 2019 Dan Kestranek.
+// Copyright 2020 Dan Kestranek.
 
 
-#include "GDFloatingStatusBarWidget.h"
+#include "UI/GDFloatingStatusBarWidget.h"
 

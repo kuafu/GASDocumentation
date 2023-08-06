@@ -1,10 +1,10 @@
-// Copyright 2019 Dan Kestranek.
+// Copyright 2020 Dan Kestranek.
 
 
-#include "GDCharacterMovementComponent.h"
+#include "Characters/GDCharacterMovementComponent.h"
 #include "AbilitySystemComponent.h"
+#include "Characters/GDCharacterBase.h"
 #include "GameplayTagContainer.h"
-#include "GDCharacterBase.h"
 
 UGDCharacterMovementComponent::UGDCharacterMovementComponent()
 {
@@ -17,7 +17,7 @@ float UGDCharacterMovementComponent::GetMaxSpeed() const
 	AGDCharacterBase* Owner = Cast<AGDCharacterBase>(GetOwner());
 	if (!Owner)
 	{
-		//UE_LOG(LogTemp, Error, TEXT("%s() No Owner"), TEXT(__FUNCTION__));
+		UE_LOG(LogTemp, Error, TEXT("%s() No Owner"), *FString(__FUNCTION__));
 		return Super::GetMaxSpeed();
 	}
 

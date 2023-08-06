@@ -1,7 +1,7 @@
-// Copyright 2019 Dan Kestranek.
+// Copyright 2020 Dan Kestranek.
 
 
-#include "AsyncTaskAttributeChanged.h"
+#include "Characters/Abilities/AsyncTaskAttributeChanged.h"
 
 UAsyncTaskAttributeChanged* UAsyncTaskAttributeChanged::ListenForAttributeChange(UAbilitySystemComponent* AbilitySystemComponent, FGameplayAttribute Attribute)
 {
@@ -40,7 +40,7 @@ UAsyncTaskAttributeChanged * UAsyncTaskAttributeChanged::ListenForAttributesChan
 	return WaitForAttributeChangedTask;
 }
 
-void UAsyncTaskAttributeChanged::BeginDestroy()
+void UAsyncTaskAttributeChanged::EndTask()
 {
 	if (IsValid(ASC))
 	{
@@ -52,7 +52,8 @@ void UAsyncTaskAttributeChanged::BeginDestroy()
 		}
 	}
 
-	Super::BeginDestroy();
+	SetReadyToDestroy();
+	MarkAsGarbage();
 }
 
 void UAsyncTaskAttributeChanged::AttributeChanged(const FOnAttributeChangeData & Data)

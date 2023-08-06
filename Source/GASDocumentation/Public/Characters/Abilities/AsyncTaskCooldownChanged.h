@@ -1,11 +1,11 @@
-// Copyright 2019 Dan Kestranek.
+// Copyright 2020 Dan Kestranek.
 
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Kismet/BlueprintAsyncActionBase.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayTagContainer.h"
-#include "Kismet/BlueprintAsyncActionBase.h"
 #include "AsyncTaskCooldownChanged.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnCooldownChanged, FGameplayTag, CooldownTag, float, TimeRemaining, float, Duration);
@@ -14,7 +14,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnCooldownChanged, FGameplayTag,
  * Blueprint node to automatically register a listener for changes (Begin and End) to an array of Cooldown tags.
  * Useful to use in UI.
  */
-UCLASS()
+UCLASS(BlueprintType, meta = (ExposedAsyncProxy = AsyncTask))
 class GASDOCUMENTATION_API UAsyncTaskCooldownChanged : public UBlueprintAsyncActionBase
 {
 	GENERATED_BODY()
@@ -32,7 +32,10 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true"))
 	static UAsyncTaskCooldownChanged* ListenForCooldownChange(UAbilitySystemComponent* AbilitySystemComponent, FGameplayTagContainer CooldownTags, bool UseServerCooldown);
 
-	virtual void BeginDestroy() override;
+	// You must call this function manually when you want the AsyncTask to end.
+	// For UMG Widgets, you would call it in the Widget's Destruct event.
+	UFUNCTION(BlueprintCallable)
+	void EndTask();
 
 protected:
 	UPROPERTY()

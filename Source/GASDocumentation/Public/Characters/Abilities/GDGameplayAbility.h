@@ -1,10 +1,10 @@
-// Copyright 2019 Dan Kestranek.
+// Copyright 2020 Dan Kestranek.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
-#include "GASDocumentation.h"
+#include "GASDocumentation/GASDocumentation.h"
 #include "GDGameplayAbility.generated.h"
 
 /**
@@ -27,7 +27,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Ability")
 	EGDAbilityInputID AbilityID = EGDAbilityInputID::None;
 
-	// Tells an ability to activate immediately when its granted. Used for passive abilities and abilites forced on others.
+	// Tells an ability to activate immediately when its granted. Used for passive abilities and abilities forced on others.
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Ability")
 	bool ActivateAbilityOnGranted = false;
 

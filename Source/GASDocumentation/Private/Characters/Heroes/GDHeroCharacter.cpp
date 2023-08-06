@@ -1,22 +1,22 @@
-// Copyright 2019 Dan Kestranek.
+// Copyright 2020 Dan Kestranek.
 
 
-#include "GDHeroCharacter.h"
-#include "Abilities/AttributeSets/GDAttributeSetBase.h"
+#include "Characters/Heroes/GDHeroCharacter.h"
 #include "AI/GDHeroAIController.h"
 #include "Camera/CameraComponent.h"
+#include "Characters/Abilities/AttributeSets/GDAttributeSetBase.h"
+#include "Characters/Abilities/GDAbilitySystemComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/DecalComponent.h"
+#include "Components/WidgetComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "GASDocumentationGameMode.h"
-#include "GDAbilitySystemComponent.h"
-#include "GDPlayerController.h"
-#include "GDPlayerState.h"
-#include "Kismet/KismetMathLibrary.h"
+#include "GASDocumentation/GASDocumentationGameMode.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Player/GDPlayerController.h"
+#include "Player/GDPlayerState.h"
 #include "UI/GDFloatingStatusBarWidget.h"
 #include "UObject/ConstructorHelpers.h"
-#include "WidgetComponent.h"
 
 AGDHeroCharacter::AGDHeroCharacter(const class FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -48,7 +48,7 @@ AGDHeroCharacter::AGDHeroCharacter(const class FObjectInitializer& ObjectInitial
 	UIFloatingStatusBarClass = StaticLoadClass(UObject::StaticClass(), nullptr, TEXT("/Game/GASDocumentation/UI/UI_FloatingStatusBar_Hero.UI_FloatingStatusBar_Hero_C"));
 	if (!UIFloatingStatusBarClass)
 	{
-		//UE_LOG(LogTemp, Error, TEXT("%s() Failed to find UIFloatingStatusBarClass. If it was moved, please update the reference location in C++."), TEXT(__FUNCTION__));
+		UE_LOG(LogTemp, Error, TEXT("%s() Failed to find UIFloatingStatusBarClass. If it was moved, please update the reference location in C++."), *FString(__FUNCTION__));
 	}
 
 	AIControllerClass = AGDHeroAIController::StaticClass();
@@ -62,18 +62,15 @@ void AGDHeroCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AGDHeroCharacter::MoveForward);
-	PlayerInputComponent->BindAxis("MoveBackward", this, &AGDHeroCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AGDHeroCharacter::MoveRight);
-	PlayerInputComponent->BindAxis("MoveLeft", this, &AGDHeroCharacter::MoveRight);
 
 	PlayerInputComponent->BindAxis("LookUp", this, &AGDHeroCharacter::LookUp);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AGDHeroCharacter::LookUpRate);
 	PlayerInputComponent->BindAxis("Turn", this, &AGDHeroCharacter::Turn);
 	PlayerInputComponent->BindAxis("TurnRate", this, &AGDHeroCharacter::TurnRate);
 
-	// Bind to AbilitySystemComponent
-	AbilitySystemComponent->BindAbilityActivationToInputComponent(PlayerInputComponent, FGameplayAbilityInputBinds(FString("ConfirmTarget"),
-		FString("CancelTarget"), FString("EGDAbilityInputID"), static_cast<int32>(EGDAbilityInputID::Confirm), static_cast<int32>(EGDAbilityInputID::Cancel)));
+	// Bind player input to the AbilitySystemComponent. Also called in OnRep_PlayerState because of a potential race condition.
+	BindASCInput();
 }
 
 // Server only
@@ -99,6 +96,20 @@ void AGDHeroCharacter::PossessedBy(AController * NewController)
 		// For now assume possession = spawn/respawn.
 		InitializeAttributes();
 
+		
+		// Respawn specific things that won't affect first possession.
+
+		// Forcibly set the DeadTag count to 0
+		AbilitySystemComponent->SetTagMapCount(DeadTag, 0);
+
+		// Set Health/Mana/Stamina to their max. This is only necessary for *Respawn*.
+		SetHealth(GetMaxHealth());
+		SetMana(GetMaxMana());
+		SetStamina(GetMaxStamina());
+
+		// End respawn specific things
+
+
 		AddStartupEffects();
 
 		AddCharacterAbilities();
@@ -110,17 +121,6 @@ void AGDHeroCharacter::PossessedBy(AController * NewController)
 		}
 
 		InitializeFloatingStatusBar();
-
-
-		// Respawn specific things that won't affect first possession.
-
-		// Forcibly set the DeadTag count to 0
-		AbilitySystemComponent->SetTagMapCount(DeadTag, 0);
-
-		// Set Health/Mana/Stamina to their max. This is only necessary for *Respawn*.
-		SetHealth(GetMaxHealth());
-		SetMana(GetMaxMana());
-		SetStamina(GetMaxStamina());
 	}
 }
 
@@ -183,10 +183,18 @@ void AGDHeroCharacter::BeginPlay()
 	// When the player a client, the floating status bars are all set up in OnRep_PlayerState.
 	InitializeFloatingStatusBar();
 
-	GunComponent->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("GunSocket"));
-
 	StartingCameraBoomArmLength = CameraBoom->TargetArmLength;
 	StartingCameraBoomLocation = CameraBoom->GetRelativeLocation();
+}
+
+void AGDHeroCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	if (GunComponent && GetMesh())
+	{
+		GunComponent->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("GunSocket"));
+	}
 }
 
 void AGDHeroCharacter::LookUp(float Value)
@@ -269,8 +277,11 @@ void AGDHeroCharacter::OnRep_PlayerState()
 		// Set the ASC for clients. Server does this in PossessedBy.
 		AbilitySystemComponent = Cast<UGDAbilitySystemComponent>(PS->GetAbilitySystemComponent());
 
-		// Refresh ASC Actor Info for clients. Server will be refreshed by its AI/PlayerController when it possesses a new Actor.
-		AbilitySystemComponent->RefreshAbilityActorInfo();
+		// Init ASC Actor Info for clients. Server will init its ASC when it possesses a new Actor.
+		AbilitySystemComponent->InitAbilityActorInfo(PS, this);
+
+		// Bind player input to the AbilitySystemComponent. Also called in SetupPlayerInputComponent because of a potential race condition.
+		BindASCInput();
 
 		// Set the AttributeSetBase for convenience attribute functions
 		AttributeSetBase = PS->GetAttributeSetBase();
@@ -298,5 +309,17 @@ void AGDHeroCharacter::OnRep_PlayerState()
 		SetHealth(GetMaxHealth());
 		SetMana(GetMaxMana());
 		SetStamina(GetMaxStamina());
+	}
+}
+
+void AGDHeroCharacter::BindASCInput()
+{
+	if (!ASCInputBound && AbilitySystemComponent.IsValid() && IsValid(InputComponent))
+	{
+		FTopLevelAssetPath AbilityEnumAssetPath = FTopLevelAssetPath(FName("/Script/GASDocumentation"), FName("EGDAbilityInputID"));
+		AbilitySystemComponent->BindAbilityActivationToInputComponent(InputComponent, FGameplayAbilityInputBinds(FString("ConfirmTarget"),
+			FString("CancelTarget"), AbilityEnumAssetPath, static_cast<int32>(EGDAbilityInputID::Confirm), static_cast<int32>(EGDAbilityInputID::Cancel)));
+
+		ASCInputBound = true;
 	}
 }

@@ -1,11 +1,11 @@
-// Copyright 2019 Dan Kestranek.
+// Copyright 2020 Dan Kestranek.
 
 
-#include "GDPlayerController.h"
+#include "Player/GDPlayerController.h"
 #include "AbilitySystemComponent.h"
-#include "GDDamageTextWidgetComponent.h"
-#include "GDHeroCharacter.h"
-#include "GDPlayerState.h"
+#include "Characters/Heroes/GDHeroCharacter.h"
+#include "Player/GDPlayerState.h"
+#include "UI/GDDamageTextWidgetComponent.h"
 #include "UI/GDHUDWidget.h"
 
 void AGDPlayerController::CreateHUD()
@@ -18,7 +18,7 @@ void AGDPlayerController::CreateHUD()
 
 	if (!UIHUDWidgetClass)
 	{
-		//UE_LOG(LogTemp, Error, TEXT("%s() Missing UIHUDWidgetClass. Please fill in on the Blueprint of the PlayerController."), TEXT(__FUNCTION__));
+		UE_LOG(LogTemp, Error, TEXT("%s() Missing UIHUDWidgetClass. Please fill in on the Blueprint of the PlayerController."), *FString(__FUNCTION__));
 		return;
 	}
 
@@ -41,25 +41,19 @@ void AGDPlayerController::CreateHUD()
 	// Set attributes
 	UIHUDWidget->SetCurrentHealth(PS->GetHealth());
 	UIHUDWidget->SetMaxHealth(PS->GetMaxHealth());
-	UIHUDWidget->SetHealthPercentage(PS->GetHealth() / PS->GetMaxHealth());
+	UIHUDWidget->SetHealthPercentage(PS->GetHealth() / FMath::Max<float>(PS->GetMaxHealth(), 1.f));
 	UIHUDWidget->SetCurrentMana(PS->GetMana());
 	UIHUDWidget->SetMaxMana(PS->GetMaxMana());
-	UIHUDWidget->SetManaPercentage(PS->GetMana() / PS->GetMaxMana());
+	UIHUDWidget->SetManaPercentage(PS->GetMana() / FMath::Max<float>(PS->GetMaxMana(), 1.f));
 	UIHUDWidget->SetHealthRegenRate(PS->GetHealthRegenRate());
 	UIHUDWidget->SetManaRegenRate(PS->GetManaRegenRate());
 	UIHUDWidget->SetCurrentStamina(PS->GetStamina());
 	UIHUDWidget->SetMaxStamina(PS->GetMaxStamina());
-	UIHUDWidget->SetStaminaPercentage(PS->GetStamina() / PS->GetMaxStamina());
+	UIHUDWidget->SetStaminaPercentage(PS->GetStamina() / FMath::Max<float>(PS->GetMaxStamina(), 1.f));
 	UIHUDWidget->SetStaminaRegenRate(PS->GetStaminaRegenRate());
 	UIHUDWidget->SetExperience(PS->GetXP());
 	UIHUDWidget->SetGold(PS->GetGold());
 	UIHUDWidget->SetHeroLevel(PS->GetCharacterLevel());
-
-	DamageNumberClass = StaticLoadClass(UObject::StaticClass(), nullptr, TEXT("/Game/GASDocumentation/UI/WC_DamageText.WC_DamageText_C"));
-	if (!DamageNumberClass)
-	{
-		//UE_LOG(LogTemp, Error, TEXT("%s() Failed to find DamageNumberClass. If it was moved, please update the reference location in C++."), TEXT(__FUNCTION__));
-	}
 }
 
 UGDHUDWidget * AGDPlayerController::GetHUD()
@@ -67,15 +61,18 @@ UGDHUDWidget * AGDPlayerController::GetHUD()
 	return UIHUDWidget;
 }
 
-void AGDPlayerController::ShowDamageNumber_Implementation(float DamageAmount, AGDCharacterBase * TargetCharacter)
+void AGDPlayerController::ShowDamageNumber_Implementation(float DamageAmount, AGDCharacterBase* TargetCharacter)
 {
-	UGDDamageTextWidgetComponent* DamageText = NewObject<UGDDamageTextWidgetComponent>(TargetCharacter, DamageNumberClass);
-	DamageText->RegisterComponent();
-	DamageText->AttachToComponent(TargetCharacter->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
-	DamageText->SetDamageText(DamageAmount);
+	if (TargetCharacter && DamageNumberClass)
+	{
+		UGDDamageTextWidgetComponent* DamageText = NewObject<UGDDamageTextWidgetComponent>(TargetCharacter, DamageNumberClass);
+		DamageText->RegisterComponent();
+		DamageText->AttachToComponent(TargetCharacter->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+		DamageText->SetDamageText(DamageAmount);
+	}
 }
 
-bool AGDPlayerController::ShowDamageNumber_Validate(float DamageAmount, AGDCharacterBase * TargetCharacter)
+bool AGDPlayerController::ShowDamageNumber_Validate(float DamageAmount, AGDCharacterBase* TargetCharacter)
 {
 	return true;
 }
@@ -94,7 +91,7 @@ bool AGDPlayerController::SetRespawnCountdown_Validate(float RespawnTimeRemainin
 }
 
 // Server only
-void AGDPlayerController::OnPossess(APawn * InPawn)
+void AGDPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 

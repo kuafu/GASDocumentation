@@ -1,9 +1,9 @@
-// Copyright 2019 Dan Kestranek.
+// Copyright 2020 Dan Kestranek.
 
 
-#include "GDGA_CharacterJump.h"
-#include "GDCharacterBase.h"
-#include "GASDocumentation.h"
+#include "Characters/Abilities/GDGA_CharacterJump.h"
+#include "Characters/GDCharacterBase.h"
+#include "GASDocumentation/GASDocumentation.h"
 
 UGDGA_CharacterJump::UGDGA_CharacterJump()
 {
@@ -19,7 +19,7 @@ void UGDGA_CharacterJump::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	{
 		if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 		{
-			EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		}
 
 		ACharacter * Character = CastChecked<ACharacter>(ActorInfo->AvatarActor.Get());

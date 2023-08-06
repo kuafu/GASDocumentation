@@ -1,7 +1,7 @@
-// Copyright 2019 Dan Kestranek.
+// Copyright 2020 Dan Kestranek.
 
 
-#include "AsyncTaskEffectStackChanged.h"
+#include "Characters/Abilities/AsyncTaskEffectStackChanged.h"
 
 UAsyncTaskEffectStackChanged * UAsyncTaskEffectStackChanged::ListenForGameplayEffectStackChange(UAbilitySystemComponent * AbilitySystemComponent, FGameplayTag InEffectGameplayTag)
 {
@@ -11,7 +11,7 @@ UAsyncTaskEffectStackChanged * UAsyncTaskEffectStackChanged::ListenForGameplayEf
 
 	if (!IsValid(AbilitySystemComponent) || !InEffectGameplayTag.IsValid())
 	{
-		ListenForGameplayEffectStackChange->RemoveFromRoot();
+		ListenForGameplayEffectStackChange->EndTask();
 		return nullptr;
 	}
 
@@ -19,6 +19,23 @@ UAsyncTaskEffectStackChanged * UAsyncTaskEffectStackChanged::ListenForGameplayEf
 	AbilitySystemComponent->OnAnyGameplayEffectRemovedDelegate().AddUObject(ListenForGameplayEffectStackChange, &UAsyncTaskEffectStackChanged::OnRemoveGameplayEffectCallback);
 
 	return ListenForGameplayEffectStackChange;
+}
+
+void UAsyncTaskEffectStackChanged::EndTask()
+{
+	if (IsValid(ASC))
+	{
+		ASC->OnActiveGameplayEffectAddedDelegateToSelf.RemoveAll(this);
+		ASC->OnAnyGameplayEffectRemovedDelegate().RemoveAll(this);
+		
+		if(ActiveEffectHandle.IsValid())
+		{
+			ASC->OnGameplayEffectStackChangeDelegate(ActiveEffectHandle)->RemoveAll(this);
+		}
+	}
+
+	SetReadyToDestroy();
+	MarkAsGarbage();
 }
 
 void UAsyncTaskEffectStackChanged::OnActiveGameplayEffectAddedCallback(UAbilitySystemComponent * Target, const FGameplayEffectSpec & SpecApplied, FActiveGameplayEffectHandle ActiveHandle)
@@ -33,6 +50,7 @@ void UAsyncTaskEffectStackChanged::OnActiveGameplayEffectAddedCallback(UAbilityS
 	{
 		ASC->OnGameplayEffectStackChangeDelegate(ActiveHandle)->AddUObject(this, &UAsyncTaskEffectStackChanged::GameplayEffectStackChanged);
 		OnGameplayEffectStackChange.Broadcast(EffectGameplayTag, ActiveHandle, 1, 0);
+		ActiveEffectHandle = ActiveHandle;
 	}
 }
 

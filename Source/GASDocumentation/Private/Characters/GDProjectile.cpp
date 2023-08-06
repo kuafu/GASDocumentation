@@ -1,7 +1,7 @@
-// Copyright 2019 Dan Kestranek.
+// Copyright 2020 Dan Kestranek.
 
 
-#include "GDProjectile.h"
+#include "Characters/GDProjectile.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
 // Sets default values

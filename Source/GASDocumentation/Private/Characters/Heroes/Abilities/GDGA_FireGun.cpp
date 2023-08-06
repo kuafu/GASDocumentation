@@ -1,11 +1,11 @@
-// Copyright 2019 Dan Kestranek.
+// Copyright 2020 Dan Kestranek.
 
 
-#include "GDGA_FireGun.h"
+#include "Characters/Heroes/Abilities/GDGA_FireGun.h"
 #include "AbilitySystemComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Characters/Heroes/GDHeroCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "GDHeroCharacter.h"
 #include "Kismet/KismetMathLibrary.h"
 
 #include "Abilities/Tasks/AbilityTask_WaitInputRelease.h"

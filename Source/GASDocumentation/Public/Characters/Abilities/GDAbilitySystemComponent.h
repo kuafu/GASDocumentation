@@ -1,4 +1,4 @@
-// Copyright 2019 Dan Kestranek.
+// Copyright 2020 Dan Kestranek.
 
 #pragma once
 
@@ -17,8 +17,8 @@ class GASDOCUMENTATION_API UGDAbilitySystemComponent : public UAbilitySystemComp
 	GENERATED_BODY()
 	
 public:
-	bool CharacterAbilitiesGiven = false;
-	bool StartupEffectsApplied = false;
+	bool bCharacterAbilitiesGiven = false;
+	bool bStartupEffectsApplied = false;
 
 	FReceivedDamageDelegate ReceivedDamage;
 

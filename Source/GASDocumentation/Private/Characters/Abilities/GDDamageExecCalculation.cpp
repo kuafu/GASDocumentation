@@ -1,17 +1,14 @@
-// Copyright 2019 Dan Kestranek.
+// Copyright 2020 Dan Kestranek.
 
 
-#include "GDDamageExecCalculation.h"
-#include "GDAbilitySystemComponent.h"
-#include "GDAttributeSetBase.h"
+#include "Characters/Abilities/GDDamageExecCalculation.h"
+#include "Characters/Abilities/GDAbilitySystemComponent.h"
+#include "Characters/Abilities/AttributeSets/GDAttributeSetBase.h"
 
 // Declare the attributes to capture and define how we want to capture them from the Source and Target.
 struct GDDamageStatics
 {
 	DECLARE_ATTRIBUTE_CAPTUREDEF(Armor);
-
-	// Meta attribute that we're passing into the ExecCalc via SetByCaller on the GESpec so we don't capture it.
-	// We still need to declare and define it so that we can output to it.
 	DECLARE_ATTRIBUTE_CAPTUREDEF(Damage);
 
 	GDDamageStatics()
@@ -20,11 +17,11 @@ struct GDDamageStatics
 
 		// We're not capturing anything from the Source in this example, but there could be like AttackPower attributes that you might want.
 
-		// Capture the Target's Armor. Don't snapshot (the false).
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UGDAttributeSetBase, Armor, Target, false);
+		// Capture optional Damage set on the damage GE as a CalculationModifier under the ExecutionCalculation
+		DEFINE_ATTRIBUTE_CAPTUREDEF(UGDAttributeSetBase, Damage, Source, true);
 
-		// The Target's received Damage. This is the value of health that will be subtracted on the Target. We're not capturing this.
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UGDAttributeSetBase, Damage, Target, false);
+		// Capture the Target's Armor. Don't snapshot.
+		DEFINE_ATTRIBUTE_CAPTUREDEF(UGDAttributeSetBase, Armor, Target, false);
 	}
 };
 
@@ -36,9 +33,8 @@ static const GDDamageStatics& DamageStatics()
 
 UGDDamageExecCalculation::UGDDamageExecCalculation()
 {
+	RelevantAttributesToCapture.Add(DamageStatics().DamageDef);
 	RelevantAttributesToCapture.Add(DamageStatics().ArmorDef);
-
-	// We don't include Damage here because we're not capturing it. It is generated inside the ExecCalc.
 }
 
 void UGDDamageExecCalculation::Execute_Implementation(const FGameplayEffectCustomExecutionParameters & ExecutionParams, OUT FGameplayEffectCustomExecutionOutput & OutExecutionOutput) const
@@ -46,8 +42,8 @@ void UGDDamageExecCalculation::Execute_Implementation(const FGameplayEffectCusto
 	UAbilitySystemComponent* TargetAbilitySystemComponent = ExecutionParams.GetTargetAbilitySystemComponent();
 	UAbilitySystemComponent* SourceAbilitySystemComponent = ExecutionParams.GetSourceAbilitySystemComponent();
 
-	AActor* SourceActor = SourceAbilitySystemComponent ? SourceAbilitySystemComponent->AvatarActor : nullptr;
-	AActor* TargetActor = TargetAbilitySystemComponent ? TargetAbilitySystemComponent->AvatarActor : nullptr;
+	AActor* SourceActor = SourceAbilitySystemComponent ? SourceAbilitySystemComponent->GetAvatarActor() : nullptr;
+	AActor* TargetActor = TargetAbilitySystemComponent ? TargetAbilitySystemComponent->GetAvatarActor() : nullptr;
 
 	const FGameplayEffectSpec& Spec = ExecutionParams.GetOwningSpec();
 
@@ -60,10 +56,14 @@ void UGDDamageExecCalculation::Execute_Implementation(const FGameplayEffectCusto
 	EvaluationParameters.TargetTags = TargetTags;
 
 	float Armor = 0.0f;
-	FMath::Max<float>(ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().ArmorDef, EvaluationParameters, Armor), 0.0f);
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().ArmorDef, EvaluationParameters, Armor);
+	Armor = FMath::Max<float>(Armor, 0.0f);
 
-	// SetByCaller Damage
-	float Damage = FMath::Max<float>(Spec.GetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Damage")), false, -1.0f), 0.0f);
+	float Damage = 0.0f;
+	// Capture optional damage value set on the damage GE as a CalculationModifier under the ExecutionCalculation
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().DamageDef, EvaluationParameters, Damage);
+	// Add SetByCaller damage if it exists
+	Damage += FMath::Max<float>(Spec.GetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Damage")), false, -1.0f), 0.0f);
 
 	float UnmitigatedDamage = Damage; // Can multiply any damage boosters here
 	

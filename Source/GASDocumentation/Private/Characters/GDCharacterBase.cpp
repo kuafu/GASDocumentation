@@ -1,13 +1,13 @@
-// Copyright 2019 Dan Kestranek.
+// Copyright 2020 Dan Kestranek.
 
 
-#include "GDCharacterBase.h"
-#include "Abilities/AttributeSets/GDAttributeSetBase.h"
-#include "Abilities/GDGameplayAbility.h"
+#include "Characters/GDCharacterBase.h"
+#include "Characters/Abilities/AttributeSets/GDAttributeSetBase.h"
+#include "Characters/Abilities/GDAbilitySystemComponent.h"
+#include "Characters/Abilities/GDGameplayAbility.h"
+#include "Characters/GDCharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "GDAbilitySystemComponent.h"
-#include "GDCharacterMovementComponent.h"
-#include "GDDamageTextWidgetComponent.h"
+#include "UI/GDDamageTextWidgetComponent.h"
 
 // Sets default values
 AGDCharacterBase::AGDCharacterBase(const class FObjectInitializer& ObjectInitializer) :
@@ -46,7 +46,7 @@ int32 AGDCharacterBase::GetAbilityLevel(EGDAbilityInputID AbilityID) const
 
 void AGDCharacterBase::RemoveCharacterAbilities()
 {
-	if (GetLocalRole() != ROLE_Authority || !AbilitySystemComponent.IsValid() || !AbilitySystemComponent->CharacterAbilitiesGiven)
+	if (GetLocalRole() != ROLE_Authority || !AbilitySystemComponent.IsValid() || !AbilitySystemComponent->bCharacterAbilitiesGiven)
 	{
 		return;
 	}
@@ -67,7 +67,7 @@ void AGDCharacterBase::RemoveCharacterAbilities()
 		AbilitySystemComponent->ClearAbility(AbilitiesToRemove[i]);
 	}
 
-	AbilitySystemComponent->CharacterAbilitiesGiven = false;
+	AbilitySystemComponent->bCharacterAbilitiesGiven = false;
 }
 
 EGDHitReactDirection AGDCharacterBase::GetHitReactDirection(const FVector & ImpactPoint)
@@ -274,7 +274,7 @@ void AGDCharacterBase::BeginPlay()
 void AGDCharacterBase::AddCharacterAbilities()
 {
 	// Grant abilities, but only on the server	
-	if (GetLocalRole() != ROLE_Authority || !AbilitySystemComponent.IsValid() || AbilitySystemComponent->CharacterAbilitiesGiven)
+	if (GetLocalRole() != ROLE_Authority || !AbilitySystemComponent.IsValid() || AbilitySystemComponent->bCharacterAbilitiesGiven)
 	{
 		return;
 	}
@@ -285,7 +285,7 @@ void AGDCharacterBase::AddCharacterAbilities()
 			FGameplayAbilitySpec(StartupAbility, GetAbilityLevel(StartupAbility.GetDefaultObject()->AbilityID), static_cast<int32>(StartupAbility.GetDefaultObject()->AbilityInputID), this));
 	}
 
-	AbilitySystemComponent->CharacterAbilitiesGiven = true;
+	AbilitySystemComponent->bCharacterAbilitiesGiven = true;
 }
 
 void AGDCharacterBase::InitializeAttributes()
@@ -297,7 +297,7 @@ void AGDCharacterBase::InitializeAttributes()
 
 	if (!DefaultAttributes)
 	{
-		//UE_LOG(LogTemp, Error, TEXT("%s() Missing DefaultAttributes for %s. Please fill in the character's Blueprint."), TEXT(__FUNCTION__), *GetName());
+		UE_LOG(LogTemp, Error, TEXT("%s() Missing DefaultAttributes for %s. Please fill in the character's Blueprint."), *FString(__FUNCTION__), *GetName());
 		return;
 	}
 
@@ -314,7 +314,7 @@ void AGDCharacterBase::InitializeAttributes()
 
 void AGDCharacterBase::AddStartupEffects()
 {
-	if (GetLocalRole() != ROLE_Authority || !AbilitySystemComponent.IsValid() || AbilitySystemComponent->StartupEffectsApplied)
+	if (GetLocalRole() != ROLE_Authority || !AbilitySystemComponent.IsValid() || AbilitySystemComponent->bStartupEffectsApplied)
 	{
 		return;
 	}
@@ -331,7 +331,7 @@ void AGDCharacterBase::AddStartupEffects()
 		}
 	}
 
-	AbilitySystemComponent->StartupEffectsApplied = true;
+	AbilitySystemComponent->bStartupEffectsApplied = true;
 }
 
 void AGDCharacterBase::SetHealth(float Health)

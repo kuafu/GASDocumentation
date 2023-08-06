@@ -1,13 +1,13 @@
-// Copyright 2019 Dan Kestranek.
+// Copyright 2020 Dan Kestranek.
 
 
-#include "GDMinionCharacter.h"
+#include "Characters/Minions/GDMinionCharacter.h"
+#include "Characters/Abilities/GDAbilitySystemComponent.h"
+#include "Characters/Abilities/AttributeSets/GDAttributeSetBase.h"
 #include "Components/CapsuleComponent.h"
-#include "GDAbilitySystemComponent.h"
-#include "GDAttributeSetBase.h"
-#include "GDFloatingStatusBarWidget.h"
+#include "Components/WidgetComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "WidgetComponent.h"
+#include "UI/GDFloatingStatusBarWidget.h"
 
 AGDMinionCharacter::AGDMinionCharacter(const class FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -40,7 +40,7 @@ AGDMinionCharacter::AGDMinionCharacter(const class FObjectInitializer& ObjectIni
 	UIFloatingStatusBarClass = StaticLoadClass(UObject::StaticClass(), nullptr, TEXT("/Game/GASDocumentation/UI/UI_FloatingStatusBar_Minion.UI_FloatingStatusBar_Minion_C"));
 	if (!UIFloatingStatusBarClass)
 	{
-		//UE_LOG(LogTemp, Error, TEXT("%s() Failed to find UIFloatingStatusBarClass. If it was moved, please update the reference location in C++."), TEXT(__FUNCTION__));
+		UE_LOG(LogTemp, Error, TEXT("%s() Failed to find UIFloatingStatusBarClass. If it was moved, please update the reference location in C++."), *FString(__FUNCTION__));
 	}
 }
 
@@ -82,7 +82,7 @@ void AGDMinionCharacter::BeginPlay()
 	}
 }
 
-// ÉËº¦ÊÂ¼þ. Èç¹ûËÀÍö£¬±ê¼ÇÉÏDeadTag
+// ï¿½Ëºï¿½ï¿½Â¼ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½DeadTag
 void AGDMinionCharacter::OnHealthChanged(const FOnAttributeChangeData & Data)
 {
 	float Health = Data.NewValue;
@@ -100,7 +100,7 @@ void AGDMinionCharacter::OnHealthChanged(const FOnAttributeChangeData & Data)
 	}
 }
 
-// »÷»èÊ±´ò¶Ï¼¼ÄÜ
+// ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Ï¼ï¿½ï¿½ï¿½
 void AGDMinionCharacter::StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
 {
 	if (NewCount > 0)
@@ -111,7 +111,7 @@ void AGDMinionCharacter::StunTagChanged(const FGameplayTag CallbackTag, int32 Ne
 		FGameplayTagContainer AbilityTagsToIgnore;
 		AbilityTagsToIgnore.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.NotCanceledByStun")));
 
-        //±ê¼ÇÁËNotCanceledByStunµÄ¼¼ÄÜ²»ÄÜ±»´ò¶Ï
+        //ï¿½ï¿½ï¿½ï¿½ï¿½NotCanceledByStunï¿½Ä¼ï¿½ï¿½Ü²ï¿½ï¿½Ü±ï¿½ï¿½ï¿½ï¿½
 		AbilitySystemComponent->CancelAbilities(&AbilityTagsToCancel, &AbilityTagsToIgnore);
 	}
 }

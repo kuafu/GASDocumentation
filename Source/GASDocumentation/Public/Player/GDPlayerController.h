@@ -1,10 +1,10 @@
-// Copyright 2019 Dan Kestranek.
+// Copyright 2020 Dan Kestranek.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "GDCharacterBase.h"
+#include "Characters/GDCharacterBase.h"
 #include "GDPlayerController.generated.h"
 
 /**
